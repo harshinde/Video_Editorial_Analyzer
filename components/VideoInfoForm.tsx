@@ -28,9 +28,16 @@ interface VideoInfoFormProps {
   isLoading: boolean;
   onMetadataLoaded?: (meta: YouTubeMetadata | null) => void;
   onOpenKeyModal?: () => void;
+  onRunDemo?: () => void;
 }
 
 const SAMPLE_VIDEOS = [
+  {
+    label: "Avengers: Endgame Trailer (~2 Min)",
+    url: "https://www.youtube.com/watch?v=TcMBFSGVi1c",
+    description: "2:26 dramatic build: quiet slow-burn intro shifting to high-energy 1s cuts",
+    isRecommended: true
+  },
   {
     label: "Veritasium (Science Narrative)",
     url: "https://www.youtube.com/watch?v=bhiS8Z8B7V0",
@@ -59,7 +66,8 @@ const VideoInfoForm: React.FC<VideoInfoFormProps> = ({
   onClear,
   isLoading,
   onMetadataLoaded,
-  onOpenKeyModal
+  onOpenKeyModal,
+  onRunDemo
 }) => {
   const { hasKey, maskedKey } = useGeminiKey();
   const [url, setUrl] = useState<string>(initialData.youtubeUrl || '');
@@ -240,8 +248,13 @@ const VideoInfoForm: React.FC<VideoInfoFormProps> = ({
                 }`}
               >
                 <div className="truncate mr-2">
-                  <div className="font-semibold text-slate-200 group-hover:text-sky-300 transition-colors truncate">
+                  <div className="font-semibold text-slate-200 group-hover:text-sky-300 transition-colors truncate flex items-center">
                     {sample.label}
+                    {(sample as any).isRecommended && (
+                      <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        2 Min Ideal
+                      </span>
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-400 truncate">
                     {sample.description}
@@ -523,6 +536,21 @@ const VideoInfoForm: React.FC<VideoInfoFormProps> = ({
               <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
               Reset
             </button>
+
+            {/* Quick Demo Button */}
+            {onRunDemo && (
+              <button
+                type="button"
+                onClick={onRunDemo}
+                disabled={isLoading}
+                className="px-3.5 py-2.5 text-xs font-semibold text-sky-300 bg-sky-950/60 hover:bg-sky-900/70 border border-sky-500/40 rounded-xl transition flex items-center shadow-sm group"
+                id="load-demo-analysis-btn"
+                title="Load full editorial analysis for the 2-minute Avengers trailer without a key"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-sky-400 group-hover:scale-110 transition-transform" />
+                <span>Load 2-Min Demo</span>
+              </button>
+            )}
 
             {/* Quick Key Status indicator in form footer */}
             {onOpenKeyModal && (

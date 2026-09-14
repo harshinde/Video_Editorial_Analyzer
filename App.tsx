@@ -8,7 +8,8 @@ import LoadingIndicator from './components/LoadingIndicator';
 import ErrorAlert from './components/ErrorAlert';
 import GeminiApiKeyModal from './components/GeminiApiKeyModal';
 import { useGeminiKey } from './utils/apiKeyStorage';
-import { Film, Clapperboard, Sparkles, Video, KeyRound, AlertTriangle } from 'lucide-react';
+import { DEMO_EDITORIAL_ANALYSIS, DEMO_VIDEO_METADATA } from './data/demoEditorialData';
+import { Film, Clapperboard, Sparkles, Video, KeyRound, AlertTriangle, Play } from 'lucide-react';
 
 const App: React.FC = () => {
   const { hasKey, maskedKey } = useGeminiKey();
@@ -16,14 +17,15 @@ const App: React.FC = () => {
   const [keyNoticeMessage, setKeyNoticeMessage] = useState<string | null>(null);
 
   const [videoData, setVideoData] = useState<VideoData>({
-    youtubeUrl: 'https://www.youtube.com/watch?v=bhiS8Z8B7V0',
-    title: '',
+    youtubeUrl: DEMO_VIDEO_METADATA.url,
+    title: DEMO_VIDEO_METADATA.title,
     description: '',
     transcript: ''
   });
 
-  const [metadata, setMetadata] = useState<YouTubeMetadata | null>(null);
-  const [analysis, setAnalysis] = useState<VideoEditorialProfile | null>(null);
+  const [metadata, setMetadata] = useState<YouTubeMetadata | null>(DEMO_VIDEO_METADATA);
+  const [analysis, setAnalysis] = useState<VideoEditorialProfile | null>(DEMO_EDITORIAL_ANALYSIS);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [seekTime, setSeekTime] = useState<number | null>(null);
@@ -32,10 +34,24 @@ const App: React.FC = () => {
     setMetadata(meta);
   }, []);
 
+  const handleLoadDemo = useCallback(() => {
+    setVideoData({
+      youtubeUrl: DEMO_VIDEO_METADATA.url,
+      title: DEMO_VIDEO_METADATA.title,
+      description: '',
+      transcript: ''
+    });
+    setMetadata(DEMO_VIDEO_METADATA);
+    setAnalysis(DEMO_EDITORIAL_ANALYSIS);
+    setIsDemoMode(true);
+    setError(null);
+    setSeekTime(null);
+  }, []);
+
   const handleAnalyze = useCallback(async (data: VideoData, meta?: YouTubeMetadata) => {
     // Check if user has provided a Gemini Key
     if (!hasKey) {
-      setKeyNoticeMessage('A Gemini API Key is required to run editorial analyses. Please connect your personal Google AI Studio key so credits are billed to your account.');
+      setKeyNoticeMessage('To analyze new videos outside the preloaded 2-minute demo, please connect your personal Google AI Studio Gemini API key.');
       setIsKeyModalOpen(true);
       return;
     }
@@ -43,6 +59,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setAnalysis(null);
+    setIsDemoMode(false);
     setVideoData(data);
     if (meta) {
       setMetadata(meta);
@@ -71,6 +88,7 @@ const App: React.FC = () => {
     setVideoData({ youtubeUrl: '', title: '', description: '', transcript: '' });
     setMetadata(null);
     setAnalysis(null);
+    setIsDemoMode(false);
     setError(null);
     setSeekTime(null);
     setIsLoading(false);
@@ -164,14 +182,14 @@ const App: React.FC = () => {
               <div>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-sm font-bold text-amber-200">
-                    Gemini API Key Required
+                    Interactive Demo Loaded &bull; Gemini API Key Required for Custom Videos
                   </h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    User API Quota
+                    Live Demo
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                  To analyze video editorial rhythm, cuts, and creator styles, please provide your own Google Gemini API key. Request credits are billed directly to your personal Google AI Studio account. Free-tier keys are fully supported.
+                  We've preloaded a complete, interactive analysis of the 2-minute <em>Avengers: Endgame Official Trailer</em> below so you can explore shot rhythm barcodes, pacing curves, and creator playbooks. To run analyses on <strong>your own YouTube videos</strong>, connect your free Gemini API key from Google AI Studio.
                 </p>
               </div>
             </div>
@@ -199,8 +217,9 @@ const App: React.FC = () => {
             onClear={handleClear}
             isLoading={isLoading}
             onMetadataLoaded={handleMetadataLoaded}
+            onRunDemo={handleLoadDemo}
             onOpenKeyModal={() => {
-              setKeyNoticeMessage('Connect your Gemini API Key to enable editorial analysis.');
+              setKeyNoticeMessage('Connect your Gemini API Key to enable editorial analysis for your own videos.');
               setIsKeyModalOpen(true);
             }}
           />
@@ -259,6 +278,11 @@ const App: React.FC = () => {
                     onSeek={handleSeek}
                     videoTitle={metadata?.title}
                     creatorName={metadata?.authorName}
+                    isDemoMode={isDemoMode}
+                    onOpenKeyModal={() => {
+                      setKeyNoticeMessage('Connect your Gemini API Key to analyze your own custom YouTube videos.');
+                      setIsKeyModalOpen(true);
+                    }}
                   />
                 </div>
               )}
@@ -272,6 +296,11 @@ const App: React.FC = () => {
                 analysis={analysis}
                 onSeek={handleSeek}
                 videoTitle={videoData.title}
+                isDemoMode={isDemoMode}
+                onOpenKeyModal={() => {
+                  setKeyNoticeMessage('Connect your Gemini API Key to analyze your own custom YouTube videos.');
+                  setIsKeyModalOpen(true);
+                }}
               />
             </div>
           )}

@@ -202,6 +202,13 @@ export const GeminiApiKeyModal: React.FC<GeminiApiKeyModalProps> = ({
               Your key is saved only in your local browser storage. It is never persisted on any central server or database.
             </span>
           </div>
+
+          <div className="pt-2 border-t border-slate-800/80 flex items-start space-x-2 text-[11px] text-sky-300/90">
+            <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
+            <span>
+              <strong>What to expect once added:</strong> You can run instant editorial breakdowns on any video (like the preloaded 2-minute <em>Avengers: Endgame</em> trailer) to get shot-by-shot rhythm, cut tempo, color palettes, and pacing curves.
+            </span>
+          </div>
         </div>
 
         {/* Key Form */}

@@ -28,7 +28,8 @@ import {
   Download,
   FileText,
   FileJson,
-  ChevronDown
+  ChevronDown,
+  KeyRound
 } from 'lucide-react';
 
 interface AnalysisResultsProps {
@@ -36,6 +37,8 @@ interface AnalysisResultsProps {
   onSeek?: (seconds: number) => void;
   videoTitle?: string;
   creatorName?: string;
+  isDemoMode?: boolean;
+  onOpenKeyModal?: () => void;
 }
 
 const BEAT_COLOR_MAP: Record<string, string> = {
@@ -53,7 +56,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   analysis,
   onSeek,
   videoTitle,
-  creatorName
+  creatorName,
+  isDemoMode,
+  onOpenKeyModal
 }) => {
   const [copied, setCopied] = useState(false);
   const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
@@ -137,6 +142,45 @@ ${analysis.creator_replication_guide.essential_rules.map((r, i) => `${i + 1}. ${
 
   return (
     <div className="space-y-6 w-full animate-fadeIn">
+      {/* Interactive Demo Showcase Banner */}
+      {isDemoMode && (
+        <div
+          className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-950/80 via-indigo-950/70 to-slate-900 border border-sky-500/40 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          id="demo-mode-showcase-banner"
+        >
+          <div className="flex items-start space-x-3.5">
+            <div className="p-2.5 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0 mt-0.5">
+              <Sparkles className="w-5 h-5 text-sky-400" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-sky-200 flex items-center">
+                  Interactive Editorial Demo Active
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Full Features Unlocked
+                  </span>
+                </h3>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                You are previewing the full editorial profile for the 2-minute <em>Avengers: Endgame</em> trailer. Click on timeline timestamps, tabs, and export tools to test the entire suite. To analyze <strong>your own videos</strong>, connect your Gemini Key!
+              </p>
+            </div>
+          </div>
+
+          {onOpenKeyModal && (
+            <button
+              type="button"
+              onClick={onOpenKeyModal}
+              className="px-4 py-2.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition shadow-lg shadow-amber-950/50 flex items-center shrink-0 group"
+              id="demo-banner-add-key-btn"
+            >
+              <KeyRound className="w-3.5 h-3.5 mr-1.5 text-slate-950 group-hover:rotate-12 transition-transform" />
+              Add Key for Your Videos
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Archetype & Narrative Card */}
       <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
