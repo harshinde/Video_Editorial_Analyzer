@@ -1,0 +1,9 @@
+{
+  "name": "YouTube Video Editorial Analyzer",
+  "description": "Analyze YouTube video editorial styles, pacing, camera cuts, transition patterns, and audio dynamics from any YouTube URL.",
+  "requestFramePermissions": [],
+  "prompt": "",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
