@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { VideoData, YouTubeMetadata, AnalysisScope, TimeRange } from '../types';
 import { fetchYouTubeInfo } from '../services/geminiService';
+import { useGeminiKey } from '../utils/apiKeyStorage';
 import { 
   Video, 
   Sparkles, 
@@ -15,7 +16,9 @@ import {
   Zap,
   Clock,
   BarChart3,
-  Scissors
+  Scissors,
+  KeyRound,
+  AlertTriangle
 } from 'lucide-react';
 
 interface VideoInfoFormProps {
@@ -24,6 +27,7 @@ interface VideoInfoFormProps {
   onClear: () => void;
   isLoading: boolean;
   onMetadataLoaded?: (meta: YouTubeMetadata | null) => void;
+  onOpenKeyModal?: () => void;
 }
 
 const SAMPLE_VIDEOS = [
@@ -54,8 +58,10 @@ const VideoInfoForm: React.FC<VideoInfoFormProps> = ({
   onSubmit,
   onClear,
   isLoading,
-  onMetadataLoaded
+  onMetadataLoaded,
+  onOpenKeyModal
 }) => {
+  const { hasKey, maskedKey } = useGeminiKey();
   const [url, setUrl] = useState<string>(initialData.youtubeUrl || '');
   const [metadata, setMetadata] = useState<YouTubeMetadata | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState<boolean>(false);
@@ -506,21 +512,48 @@ const VideoInfoForm: React.FC<VideoInfoFormProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center justify-between pt-2">
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={isLoading || (!url && !metadata)}
-            className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl transition flex items-center disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            Reset
-          </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-2 gap-3">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={isLoading || (!url && !metadata)}
+              className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl transition flex items-center disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Reset
+            </button>
+
+            {/* Quick Key Status indicator in form footer */}
+            {onOpenKeyModal && (
+              !hasKey ? (
+                <button
+                  type="button"
+                  onClick={onOpenKeyModal}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/40 transition flex items-center"
+                  title="Click to add your Gemini API Key"
+                >
+                  <KeyRound className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+                  <span>Key Required</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenKeyModal}
+                  className="px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex items-center"
+                  title="Click to view or update your Gemini key"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                  <span className="font-mono text-[11px] text-slate-300">{maskedKey}</span>
+                </button>
+              )
+            )}
+          </div>
 
           <button
             type="submit"
             disabled={isLoading || !hasValidVideo || isFetchingInfo}
-            className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             {isLoading 

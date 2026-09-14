@@ -319,13 +319,16 @@ app.post("/api/analyze", async (req, res) => {
     return res.status(400).json({ error: "Could not identify a valid YouTube video from the provided link." });
   }
 
-  // Check Gemini API key
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({
-      error: "GEMINI_API_KEY is not configured on the server. Please check application secrets."
+  // Require user-provided Gemini API Key from header or body (never use host personal key)
+  const userApiKey = (req.headers["x-gemini-key"] as string) || req.body?.geminiApiKey;
+  if (!userApiKey || typeof userApiKey !== "string" || !userApiKey.trim()) {
+    return res.status(401).json({
+      error: "A Gemini API Key is required to run editorial analyses. Please click 'Add Gemini Key' in the top header to enter your API key so that credits are billed to your account.",
+      requiresKey: true
     });
   }
+
+  const apiKey = userApiKey.trim();
 
   try {
     // If transcript was not supplied, try fetching it
@@ -469,8 +472,84 @@ Generate the full editorial profile matching the schema.`;
     return res.json(parsedData);
   } catch (err: any) {
     console.error("Gemini Analysis Error:", err);
+    const msg = String(err?.message || "");
+    if (msg.includes("API_KEY_INVALID") || msg.includes("API key not valid") || msg.includes("403") || msg.includes("401")) {
+      return res.status(401).json({
+        error: "The provided Gemini API Key is invalid, expired, or has insufficient permissions. Please click 'Add Gemini Key' in the header to update it.",
+        requiresKey: true
+      });
+    }
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+      return res.status(429).json({
+        error: "Your Gemini API Key quota has been exceeded. Please check your usage limits on Google AI Studio."
+      });
+    }
     return res.status(500).json({
       error: err?.message || "Failed to analyze video editorial style."
+    });
+  }
+});
+
+// Endpoint to verify a user-provided Gemini API key
+app.post("/api/verify-gemini-key", async (req, res) => {
+  const userApiKey = (req.headers["x-gemini-key"] as string) || req.body?.apiKey;
+  if (!userApiKey || typeof userApiKey !== "string" || !userApiKey.trim()) {
+    return res.status(400).json({
+      valid: false,
+      error: "No Gemini API key was provided. Please paste your key from Google AI Studio."
+    });
+  }
+
+  const apiKey = userApiKey.trim();
+  try {
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build"
+        }
+      }
+    });
+
+    // Run a minimal token call to test key validity & quota
+    const testResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "ping",
+      config: {
+        maxOutputTokens: 2,
+        temperature: 0.1
+      }
+    });
+
+    if (testResponse) {
+      return res.json({
+        valid: true,
+        message: "Gemini API key is verified and operational!"
+      });
+    }
+
+    return res.status(400).json({
+      valid: false,
+      error: "Did not receive a response from Gemini. Please check the key."
+    });
+  } catch (err: any) {
+    const message = err?.message || String(err);
+    console.error("Gemini key test failed:", message);
+    if (message.includes("API_KEY_INVALID") || message.includes("400") || message.includes("403") || message.includes("API key not valid")) {
+      return res.status(400).json({
+        valid: false,
+        error: "The provided Gemini API Key is invalid or expired. Please check your Google AI Studio dashboard."
+      });
+    }
+    if (message.includes("429") || message.includes("RESOURCE_EXHAUSTED") || message.includes("quota")) {
+      return res.status(400).json({
+        valid: false,
+        error: "This Gemini API Key has exceeded its rate limit or quota in Google AI Studio."
+      });
+    }
+    return res.status(400).json({
+      valid: false,
+      error: `Verification failed: ${message}`
     });
   }
 });
